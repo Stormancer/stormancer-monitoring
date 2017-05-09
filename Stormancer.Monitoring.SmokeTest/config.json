@@ -1,18 +1,11 @@
 ﻿{
-  "dev-server": {
-    "endpoint": "http://stormancer1.trollfacecardquest.Com",
-    "account": "3dduo",
-    "application": "dev-server",
-    "scene": "monitoring",
-    "rpc": "monitoring.statistics",
-    "secret": "CA7C43722A4DE52133D01F29286D1CECDC665FB22D9320DEC476AA4A2AFBFCA4"
-  },
+ 
   "broken-app": {
-    "endpoint": "http://stormancer1.trollfacecardquest.Com",
-    "account": "3dduo",
-    "application": "missing-server",
+    "endpoint": "http://server",
+    "account": "<account>",
+    "application": "<app>",
     "scene": "monitoring",
     "rpc": "monitoring.statistics",
-    "secret": "CA7C43722A4DE52133D01F29286D1CECDC665FB22D9320DEC476AA4A2AFBFCA4"
+    "secret": "<App secret>"
   }
 }
