@@ -53,18 +53,38 @@ namespace Stormancer.Monitoring.SmokeTest
             builder.RegisterAssemblyTypes(mainAssembly)
                 .Where(t => t.GetInterfaces().Contains(typeof(IScenario)))
                 .AsImplementedInterfaces();
+            LoadPlugins(builder);
 
             var container = builder.Build();
 
-            foreach(var scenario in container.Resolve<IEnumerable<IScenario>>())
+            foreach (var scenario in container.Resolve<IEnumerable<IScenario>>())
             {
-                if(scenario.Name == type)
+                if (scenario.Name == type)
                 {
-                   return await scenario.Run(config);
+                    return await scenario.Run(config);
                 }
             }
 
             return new Dictionary<string, float>();
+        }
+
+        private static void LoadPlugins(ContainerBuilder builder)
+        {
+            var pluginsDirectory = System.IO.Path.Combine(Environment.CurrentDirectory, "plugins");
+
+            try
+            {
+                foreach (var asmPath in System.IO.Directory.EnumerateFiles(pluginsDirectory, "*.dll"))
+                {
+                    var assembly = Assembly.LoadFile(asmPath);
+
+                    builder.RegisterAssemblyTypes(assembly)
+                    .Where(t => t.GetInterfaces().Contains(typeof(IScenario)))
+                    .AsImplementedInterfaces();
+
+                }
+            }
+            catch (Exception) { }
         }
 
 

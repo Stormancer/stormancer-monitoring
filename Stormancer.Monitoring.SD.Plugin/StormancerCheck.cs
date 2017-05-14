@@ -32,16 +32,20 @@ namespace Stormancer.Monitoring.SD.Plugin
                 prc.StartInfo = psi;
                 prc.Start();
 
-                prc.WaitForExit();
-
-                var values = prc.StandardOutput.ReadToEnd().Split('\n').Where(line => line.StartsWith("output"));
-                
-                foreach(var value in values)
+                if (!prc.WaitForExit(30000))
                 {
-                    var elements = value.Split(';');
-                    results.Add(elements[1], float.Parse(elements[2]));
+                    prc.Kill();
                 }
+                else
+                {
+                    var values = prc.StandardOutput.ReadToEnd().Split('\n').Where(line => line.StartsWith("output"));
 
+                    foreach (var value in values)
+                    {
+                        var elements = value.Split(';');
+                        results.Add(elements[1], float.Parse(elements[2]));
+                    }
+                }
                
                 
             }
