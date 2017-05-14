@@ -7,6 +7,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Reactive.Linq;
 using System.Diagnostics;
+using Newtonsoft.Json.Linq;
+using Autofac;
+using System.Reflection;
 
 namespace Stormancer.Monitoring.SmokeTest
 {
@@ -15,7 +18,7 @@ namespace Stormancer.Monitoring.SmokeTest
         static void Main(string[] args)
         {
             var json = System.IO.File.ReadAllText("config.json");
-            var fullConfig = JsonConvert.DeserializeObject<Dictionary<string, Configuration>>(json);
+            var fullConfig = JObject.Parse(json);
 
             var tasks = new List<Task<IEnumerable<Tuple<string, float>>>>();
             foreach (var config in fullConfig)
@@ -28,59 +31,42 @@ namespace Stormancer.Monitoring.SmokeTest
 
             }
 
-            var results = Task.WhenAll(tasks).Result
-               .SelectMany(entries => entries);
+            Task.WhenAll(tasks).Wait(29000);
+
+            var results = tasks.Where(t => t.IsCompleted).SelectMany(entries => entries.Result);
 
             foreach (var result in results)
             {
                 Console.WriteLine($"output;{result.Item1};{result.Item2}");
             }
 
+
         }
 
-        private static async Task<Dictionary<string, float>> RunTest(Configuration value)
+        private static async Task<Dictionary<string, float>> RunTest(dynamic config)
         {
-            var results = new Dictionary<string, float>();
-            try
+            string type = config.__type;
+
+            var mainAssembly = Assembly.GetExecutingAssembly();
+
+            var builder = new ContainerBuilder();
+            builder.RegisterAssemblyTypes(mainAssembly)
+                .Where(t => t.GetInterfaces().Contains(typeof(IScenario)))
+                .AsImplementedInterfaces();
+
+            var container = builder.Build();
+
+            foreach(var scenario in container.Resolve<IEnumerable<IScenario>>())
             {
-                var config = ClientConfiguration.ForAccount(value.account, value.application);
-                config.ServerEndpoint = value.endpoint;
-
-                var stopWatch = new Stopwatch();
-                stopWatch.Restart();
-                var client = new Client(config);
-
-                var token = await CreateConnectionToken(config.ServerEndpoint, config.Account, config.Application, value.scene, value.secret);
-                var scene = await client.GetScene(token);
-                await scene.Connect();
-                var connectionTime = stopWatch.ElapsedMilliseconds;
-                results.Add("connectionDuration", connectionTime);
-
-                var rpcResults = await scene.Rpc<string, Dictionary<string, float>>(value.rpc, value.secret);
-                var rpcTime = stopWatch.ElapsedMilliseconds;
-                stopWatch.Stop();
-
-
-                results.Add("rpcDuration", rpcTime - connectionTime);
-                results.Add("online", 1);
-                foreach (var r in rpcResults)
+                if(scenario.Name == type)
                 {
-                    results.Add(r.Key, r.Value);
+                   return await scenario.Run(config);
                 }
-
-            }
-            catch (Exception)
-            {
-                results.Add("online", 0);
             }
 
-            return results;
+            return new Dictionary<string, float>();
         }
 
-        private static async Task<string> CreateConnectionToken(string endpoint, string account, string app, string scene, string secret)
-        {
-            var management = ApplicationClient.ForApi(account, app, secret, endpoint);
-            return await management.CreateConnectionToken(scene, "");
-        }
+
     }
 }

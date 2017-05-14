@@ -1,6 +1,7 @@
 ﻿{
- 
+
   "broken-app": {
+    "__type": "rpc",
     "endpoint": "http://server",
     "account": "<account>",
     "application": "<app>",
