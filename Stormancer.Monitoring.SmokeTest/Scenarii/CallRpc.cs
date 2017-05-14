@@ -19,7 +19,7 @@ namespace Stormancer.Monitoring.SmokeTest.Scenarii
             }
         }
 
-        public async Task<Dictionary<string, float>> Run(dynamic configuration)
+        public async Task<Dictionary<string, float>> Run(dynamic configuration, string[] args)
         {
             var results = new Dictionary<string, float>();
             try

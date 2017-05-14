@@ -23,11 +23,11 @@ namespace Stormancer.Monitoring.SmokeTest
             var tasks = new List<Task<IEnumerable<Tuple<string, float>>>>();
             foreach (var config in fullConfig)
             {
-                tasks.Add(RunTest(config.Value).ContinueWith(t =>
-                {
-                    return t.Result.Select(kvp => Tuple.Create($"{config.Key}.{kvp.Key}", kvp.Value));
+                tasks.Add(RunTest(config.Value, args).ContinueWith(t =>
+                 {
+                     return t.Result.Select(kvp => Tuple.Create($"{config.Key}.{kvp.Key}", kvp.Value));
 
-                }));
+                 }));
 
             }
 
@@ -43,7 +43,7 @@ namespace Stormancer.Monitoring.SmokeTest
 
         }
 
-        private static async Task<Dictionary<string, float>> RunTest(dynamic config)
+        private static async Task<Dictionary<string, float>> RunTest(dynamic config, string[] args)
         {
             string type = config.__type;
 
@@ -61,7 +61,7 @@ namespace Stormancer.Monitoring.SmokeTest
             {
                 if (scenario.Name == type)
                 {
-                    return await scenario.Run(config);
+                    return await scenario.Run(config, args);
                 }
             }
 
