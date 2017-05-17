@@ -42,12 +42,12 @@ namespace Stormancer.LoadTester
                 var missingUsers = ExpectedUserCount(config, DateTime.UtcNow - startTime) - users.Count;
                 for (int i = 0; i < missingUsers; i++)
                 {
-                    var user = new User(d => results.Enqueue(new DataPoint { Time = DateTime.UtcNow - startTime, Data = d }));
+                    var user = new User((date, key, value) => results.Enqueue(new DataPoint { Time = date - startTime, Key = key, Value = value }));
                     users.Add(user);
                     tasks.Add(user.Run(config, tokenSource.Token));
                     Console.WriteLine($"Start user {user.Id}");
                 }
-                results.Enqueue(new DataPoint { Data = new Dictionary<string, float> { { "users", users.Count } }, Time = DateTime.UtcNow - startTime });
+                results.Enqueue(new DataPoint { Key = "users", Value = users.Count, Time = DateTime.UtcNow - startTime });
 
                 Thread.Sleep(1000);
             }
@@ -58,31 +58,30 @@ namespace Stormancer.LoadTester
 
             Console.WriteLine($"Test completed");
 
-            AnalyzeResults(results,config);
+            AnalyzeResults(results, config);
         }
 
-        static void AnalyzeResults(ConcurrentQueue<DataPoint> points,dynamic config)
+        static void AnalyzeResults(ConcurrentQueue<DataPoint> points, dynamic config)
         {
             Console.WriteLine($"Processing results...");
             var sortedPoints = points
-                .GroupBy(datapoint => (int)datapoint.Time.TotalSeconds / (int)config.resolution, datapoint => datapoint.Data)
+                .GroupBy(datapoint => (int)datapoint.Time.TotalSeconds / (int)config.resolution, datapoint => datapoint)
                 .Select(datapoint => new
                 {
                     Time = datapoint.Key,
                     Data = datapoint
                         .Aggregate(new Dictionary<string, List<float>>(), (acc, value) =>
                             {
-                                foreach (var kvp in value)
+
+                                if (!acc.ContainsKey(value.Key))
                                 {
-                                    if (!acc.ContainsKey(kvp.Key))
-                                    {
-                                        acc[kvp.Key] = new List<float> { kvp.Value };
-                                    }
-                                    else
-                                    {
-                                        acc[kvp.Key].Add(kvp.Value);
-                                    }
+                                    acc[value.Key] = new List<float> { value.Value };
                                 }
+                                else
+                                {
+                                    acc[value.Key].Add(value.Value);
+                                }
+
                                 return acc;
                             })
                         .SelectMany(kvp => ComputeMetrics(kvp.Key, kvp.Value)).ToDictionary(tuple => tuple.Item1, tuple => tuple.Item2)
@@ -107,7 +106,7 @@ namespace Stormancer.LoadTester
 
                 foreach (var point in sortedPoints)
                 {
-                    stream.Write($"{point.Time*(int)config.resolution}; ");
+                    stream.Write($"{point.Time * (int)config.resolution}; ");
                     for (int i = 0; i < metrics.Count; i++)
                     {
                         if (point.Data.ContainsKey(metrics[i]))
@@ -147,15 +146,16 @@ namespace Stormancer.LoadTester
     public class DataPoint
     {
         public TimeSpan Time { get; set; }
-        public Dictionary<string, float> Data { get; set; }
+        public string Key { get; set; }
+        public float Value { get; set; }
     }
 
     class User
     {
-        private readonly Action<Dictionary<string, float>> _setResults;
+        private readonly Action<DateTime, string, float> _setResults;
         public string Id { get; }
 
-        public User(Action<Dictionary<string, float>> setResults)
+        public User(Action<DateTime, string, float> setResults)
         {
             Id = Guid.NewGuid().ToString();
             _setResults = setResults;
@@ -175,7 +175,7 @@ namespace Stormancer.LoadTester
         private void RunScenario(dynamic config)
         {
             Console.WriteLine($"Starting scenario...");
-            var results = new Dictionary<string, float>();
+
             var directory = System.IO.Path.GetDirectoryName(this.GetType().Assembly.Location);
             var testExe = System.IO.Path.GetFullPath((string)config.agent);
 
@@ -199,13 +199,13 @@ namespace Stormancer.LoadTester
                 foreach (var value in values)
                 {
                     var elements = value.Split(';');
-                    results.Add(elements[1], float.Parse(elements[2]));
+                    _setResults(DateTime.Parse(elements[1]), elements[2], float.Parse(elements[3]));
                 }
 
 
             }
             Console.WriteLine($"Scenario completed");
-            _setResults(results);
+
         }
     }
 
