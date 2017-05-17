@@ -20,30 +20,22 @@ namespace Stormancer.Monitoring.SmokeTest
             var json = System.IO.File.ReadAllText("config.json");
             var fullConfig = JObject.Parse(json);
 
-            var tasks = new List<Task<IEnumerable<Tuple<string, float>>>>();
+            var tasks = new List<Task>();
             foreach (var config in fullConfig)
             {
-                tasks.Add(RunTest(config.Value, args).ContinueWith(t =>
-                 {
-                     return t.Result.Select(kvp => Tuple.Create($"{config.Key}.{kvp.Key}", kvp.Value));
-
-                 }));
+                Action<string,float> signalResult = (string id, float result) => {
+                    Console.WriteLine($"output;{DateTime.UtcNow};{config.Key}.{id};{result}");
+                };
+                tasks.Add(RunTest(config.Value, args,signalResult));
 
             }
 
             Task.WhenAll(tasks).Wait(29000);
 
-            var results = tasks.Where(t => t.IsCompleted).SelectMany(entries => entries.Result);
-
-            foreach (var result in results)
-            {
-                Console.WriteLine($"output;{result.Item1};{result.Item2}");
-            }
-
 
         }
 
-        private static async Task<Dictionary<string, float>> RunTest(dynamic config, string[] args)
+        private static async Task RunTest(dynamic config, string[] args, Action<string,float> sendResult)
         {
             string type = config.__type;
 
@@ -61,11 +53,12 @@ namespace Stormancer.Monitoring.SmokeTest
             {
                 if (scenario.Name == type)
                 {
-                    return await scenario.Run(config, args);
+                    
+                    await scenario.Run(config, args,sendResult);
                 }
             }
 
-            return new Dictionary<string, float>();
+           
         }
 
         private static void LoadPlugins(ContainerBuilder builder)

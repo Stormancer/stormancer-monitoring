@@ -9,6 +9,6 @@ namespace Stormancer.Monitoring.SmokeTest
     public interface IScenario
     {
         string Name { get; }
-        Task<Dictionary<string, float>> Run(dynamic configuration, string[] args);
+        Task Run(dynamic configuration, string[] args, Action<string,float> sendMetric);
     }
 }

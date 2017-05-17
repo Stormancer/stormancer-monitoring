@@ -19,9 +19,9 @@ namespace Stormancer.Monitoring.SmokeTest.Scenarii
             }
         }
 
-        public async Task<Dictionary<string, float>> Run(dynamic configuration, string[] args)
+        public async Task Run(dynamic configuration, string[] args, Action<string,float> signalMetric)
         {
-            var results = new Dictionary<string, float>();
+           
             try
             {
                 var config = ClientConfiguration.ForAccount((string)configuration.account, (string)configuration.application);
@@ -35,27 +35,27 @@ namespace Stormancer.Monitoring.SmokeTest.Scenarii
                 var scene = await client.GetScene(token);
                 await scene.Connect();
                 var connectionTime = stopWatch.ElapsedMilliseconds;
-                results.Add("connectionDuration", connectionTime);
+                signalMetric("connectionDuration", connectionTime);
 
                 var rpcResults = await scene.Rpc<string, Dictionary<string, float>>((string)configuration.rpc, (string)configuration.secret);
                 var rpcTime = stopWatch.ElapsedMilliseconds;
                 stopWatch.Stop();
 
 
-                results.Add("rpcDuration", rpcTime - connectionTime);
-                results.Add("online", 1);
+                signalMetric("rpcDuration", rpcTime - connectionTime);
+                signalMetric("online", 1);
                 foreach (var r in rpcResults)
                 {
-                    results.Add(r.Key, r.Value);
+                    signalMetric(r.Key, r.Value);
                 }
 
             }
             catch (Exception)
             {
-                results.Add("online", 0);
+                signalMetric("online", 0);
             }
 
-            return results;
+            
         }
 
         private static async Task<string> CreateConnectionToken(string endpoint, string account, string app, string scene, string secret)
