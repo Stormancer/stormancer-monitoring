@@ -33,7 +33,7 @@ namespace Stormancer.LoadTester
             var endDate = startTime + TimeSpan.FromSeconds(duration);
 
             ConcurrentQueue<DataPoint> results = new ConcurrentQueue<DataPoint>();
-            List<User> users = new List<User>();
+            List<Agent> users = new List<Agent>();
             var tokenSource = new CancellationTokenSource();
 
             var tasks = new List<Task>();
@@ -42,12 +42,13 @@ namespace Stormancer.LoadTester
                 var missingUsers = ExpectedUserCount(config, DateTime.UtcNow - startTime) - users.Count;
                 for (int i = 0; i < missingUsers; i++)
                 {
-                    var user = new User((date, key, value) => results.Enqueue(new DataPoint { Time = date - startTime, Key = key, Value = value }));
-                    users.Add(user);
-                    tasks.Add(user.Run(config, tokenSource.Token));
-                    Console.WriteLine($"Start user {user.Id}");
+                    var agent = new Agent((int)config.agents.users, (date, key, value) => results.Enqueue(new DataPoint { Time = date - startTime, Key = key, Value = value }));
+                    users.Add(agent);
+                    tasks.Add(agent.Run(config, tokenSource.Token));
+                    Console.WriteLine($"Start agent {agent.Id}");
                 }
-                results.Enqueue(new DataPoint { Key = "users", Value = users.Count, Time = DateTime.UtcNow - startTime });
+                results.Enqueue(new DataPoint { Key = "agents", Value = users.Count, Time = DateTime.UtcNow - startTime });
+                results.Enqueue(new DataPoint { Key = "users", Value = users.Count * (int)config.agents.users, Time = DateTime.UtcNow - startTime });
 
                 Thread.Sleep(1000);
             }
@@ -129,17 +130,18 @@ namespace Stormancer.LoadTester
 
         private static IEnumerable<Tuple<string, float>> ComputeMetrics(string key, IEnumerable<float> values)
         {
+            yield return Tuple.Create($"{key}.count", (float)values.Count());
             yield return Tuple.Create($"{key}.min", values.Min());
             yield return Tuple.Create($"{key}.max", values.Max());
             yield return Tuple.Create($"{key}.avg", values.Average());
-            yield return Tuple.Create($"{key}.90p", values.Percentile(0.9f));
+            yield return Tuple.Create($"{key}.90p", values.Percentile(0.9f));            
         }
 
 
 
         private static int ExpectedUserCount(dynamic config, TimeSpan elaspedTime)
         {
-            return (int)Math.Min(elaspedTime.TotalSeconds * (int)config.users.increase, (int)config.users.max);
+            return (int)Math.Min(elaspedTime.TotalSeconds * (int)config.agents.increase, (int)config.agents.max);
         }
     }
 
@@ -150,14 +152,19 @@ namespace Stormancer.LoadTester
         public float Value { get; set; }
     }
 
-    class User
+    class Agent
     {
         private readonly Action<DateTime, string, float> _setResults;
         public string Id { get; }
 
-        public User(Action<DateTime, string, float> setResults)
+        public Agent(int users, Action<DateTime, string, float> setResults)
         {
-            Id = Guid.NewGuid().ToString();
+            var ids = new string[users];
+            for (var i = 0; i < users; i++)
+            {
+                ids[i] = Guid.NewGuid().ToString();
+            }
+            Id = string.Join(" ", ids);
             _setResults = setResults;
         }
 
@@ -205,7 +212,6 @@ namespace Stormancer.LoadTester
 
             }
             Console.WriteLine($"Scenario completed");
-
         }
     }
 
