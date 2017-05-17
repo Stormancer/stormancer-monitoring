@@ -17,11 +17,12 @@ namespace SmokeTest.ScenarioSample
             }
         }
 
-        public async Task<Dictionary<string, float>> Run(dynamic configuration, string[] args)
+        public async Task Run(dynamic configuration, string[] args, Action<string, float> sendMetric)
         {
-            await Task.FromResult(true);
+            sendMetric("test", new Random().Next(100));
 
-            return new Dictionary<string, float> { { "test", new Random().Next(100) } };
+
+            await Task.FromResult(true);
         }
     }
 }
