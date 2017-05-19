@@ -23,6 +23,10 @@ namespace Stormancer.Monitoring.SmokeTest
             var tasks = new List<Task>();
             foreach (var config in fullConfig)
             {
+                if(config.Key == "timeout")
+                {
+                    continue;
+                }
                 Action<string,float> signalResult = (string id, float result) => {
                     Console.WriteLine($"output;{DateTime.UtcNow};{config.Key}.{id};{result}");
                 };
@@ -30,7 +34,7 @@ namespace Stormancer.Monitoring.SmokeTest
 
             }
 
-            Task.WhenAll(tasks).Wait(29000);
+            Task.WhenAll(tasks).Wait(TimeSpan.FromSeconds(fullConfig["timeout"].ToObject<float?>() ?? 29));
 
 
         }
