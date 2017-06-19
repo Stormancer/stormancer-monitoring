@@ -50,7 +50,7 @@ namespace Stormancer.LoadTester
                 results.Enqueue(new DataPoint { Key = "agents", Value = users.Count, Time = DateTime.UtcNow - startTime });
                 results.Enqueue(new DataPoint { Key = "users", Value = users.Count * (int)config.agents.users, Time = DateTime.UtcNow - startTime });
 
-                Thread.Sleep(1000);
+                Thread.Sleep((int)config.agents.interval);
             }
 
 
@@ -134,14 +134,14 @@ namespace Stormancer.LoadTester
             yield return Tuple.Create($"{key}.min", values.Min());
             yield return Tuple.Create($"{key}.max", values.Max());
             yield return Tuple.Create($"{key}.avg", values.Average());
-            yield return Tuple.Create($"{key}.90p", values.Percentile(0.9f));            
+            yield return Tuple.Create($"{key}.90p", values.Percentile(0.9f));
         }
 
 
 
         private static int ExpectedUserCount(dynamic config, TimeSpan elaspedTime)
         {
-            return (int)Math.Min(elaspedTime.TotalSeconds * (int)config.agents.increase, (int)config.agents.max);
+            return (int)Math.Min(elaspedTime.TotalSeconds * (int)config.agents.increase * 1000 / (int)config.agents.interval, (int)config.agents.max);
         }
     }
 
