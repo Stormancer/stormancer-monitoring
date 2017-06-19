@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Stormancer.Monitoring.SD.Plugin</RootNamespace>
     <AssemblyName>Stormancer.Monitoring.SD.Plugin</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -34,7 +34,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="BoxedIce.ServerDensity.Agent.PluginSupport">
-      <HintPath>C:\Users\Shyntae\Desktop\BattleFleet.MatchmakingTests\libs\BoxedIce.ServerDensity.Agent.PluginSupport.dll</HintPath>
+      <HintPath>libs\BoxedIce.ServerDensity.Agent.PluginSupport.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
