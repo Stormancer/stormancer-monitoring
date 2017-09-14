@@ -23,23 +23,28 @@ namespace Stormancer.Monitoring.SmokeTest
             var tasks = new List<Task>();
             foreach (var config in fullConfig)
             {
-                if(config.Key == "timeout")
+                if (config.Key == "timeout")
                 {
                     continue;
                 }
-                Action<string,float> signalResult = (string id, float result) => {
-                    Console.WriteLine($"output;{DateTime.UtcNow};{config.Key}.{id};{result}");
+                Action<string, float> signalResult = (string id, float result) =>
+                {
+                    Console.WriteLine($"output\t{DateTime.UtcNow}\t{config.Key}.{id}\t{result}");
                 };
-                tasks.Add(RunTest(config.Value, args,signalResult));
+                Action<string> signalError = (string error) =>
+                {
+                    Console.WriteLine($"error\t{DateTime.UtcNow}\t{config.Key}\t{error}");
+                };
+                tasks.Add(RunTest(config.Value, args, signalResult, signalError));
 
             }
 
-            Task.WhenAll(tasks).Wait(TimeSpan.FromSeconds(fullConfig["timeout"].ToObject<float?>() ?? 29));
+            Task.WhenAll(tasks).Wait(TimeSpan.FromSeconds(fullConfig["timeout"]?.ToObject<float?>() ?? 30));
 
 
         }
 
-        private static async Task RunTest(dynamic config, string[] args, Action<string,float> sendResult)
+        private static async Task RunTest(dynamic config, string[] args, Action<string, float> sendResult, Action<string> sendError)
         {
             string type = config.__type;
 
@@ -57,12 +62,12 @@ namespace Stormancer.Monitoring.SmokeTest
             {
                 if (scenario.Name == type)
                 {
-                    
-                    await scenario.Run(config, args,sendResult);
+
+                    await scenario.Run(config, args, sendResult, sendError);
                 }
             }
 
-           
+
         }
 
         private static void LoadPlugins(ContainerBuilder builder)

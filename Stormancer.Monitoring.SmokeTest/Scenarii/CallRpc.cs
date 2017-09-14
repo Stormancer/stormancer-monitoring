@@ -19,7 +19,7 @@ namespace Stormancer.Monitoring.SmokeTest.Scenarii
             }
         }
 
-        public async Task Run(dynamic configuration, string[] args, Action<string,float> signalMetric)
+        public async Task Run(dynamic configuration, string[] args, Action<string,float> signalMetric,Action<string> error)
         {
            
             try
@@ -50,9 +50,10 @@ namespace Stormancer.Monitoring.SmokeTest.Scenarii
                 }
 
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 signalMetric("online", 0);
+                error(ex.Message);
             }
 
             

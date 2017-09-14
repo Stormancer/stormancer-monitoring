@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json.Linq;
+using NLog;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -181,6 +182,7 @@ namespace Stormancer.LoadTester
 
         private void RunScenario(dynamic config)
         {
+            var logger = NLog.LogManager.GetCurrentClassLogger();
             Console.WriteLine($"Starting scenario...");
 
             var directory = System.IO.Path.GetDirectoryName(this.GetType().Assembly.Location);
@@ -201,14 +203,22 @@ namespace Stormancer.LoadTester
                 prc.Start();
 
                 prc.WaitForExit();
-                var values = prc.StandardOutput.ReadToEnd().Split('\n').Where(line => line.StartsWith("output"));
+                var output = prc.StandardOutput.ReadToEnd().Split('\n');
 
-                foreach (var value in values)
+                foreach (var line in output)
                 {
-                    var elements = value.Split(';');
-                    _setResults(DateTime.Parse(elements[1]), elements[2], float.Parse(elements[3]));
-                }
+                    var elements = line.Split('\t');
 
+                    if(line.StartsWith("output"))
+                    {
+                       
+                        _setResults(DateTime.Parse(elements[1]), elements[2], float.Parse(elements[3]));
+                    }
+                    else if(line.StartsWith("error"))
+                    {
+                        logger.Log(new LogEventInfo { TimeStamp = DateTime.Parse(elements[1]), Level= LogLevel.Error, Message = elements[2]  });
+                    }
+                }
 
             }
             Console.WriteLine($"Scenario completed");

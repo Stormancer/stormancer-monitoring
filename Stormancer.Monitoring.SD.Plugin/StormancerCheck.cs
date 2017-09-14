@@ -41,8 +41,8 @@ namespace Stormancer.Monitoring.SD.Plugin
 
                     foreach (var value in values)
                     {
-                        var elements = value.Split(';');
-                        results.Add(elements[1], float.Parse(elements[2]));
+                        var elements = value.Split('\t');
+                        results.Add(elements[2], float.Parse(elements[3]));
                     }
                 }
                

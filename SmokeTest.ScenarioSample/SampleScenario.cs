@@ -17,7 +17,7 @@ namespace SmokeTest.ScenarioSample
             }
         }
 
-        public async Task Run(dynamic configuration, string[] args, Action<string, float> sendMetric)
+        public async Task Run(dynamic configuration, string[] args, Action<string, float> sendMetric,Action<string> error)
         {
             sendMetric("test", new Random().Next(100));
 
