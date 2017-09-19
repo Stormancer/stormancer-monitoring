@@ -52,21 +52,99 @@ namespace Stormancer.Monitoring.SmokeTest
 
             var builder = new ContainerBuilder();
             builder.RegisterAssemblyTypes(mainAssembly)
-                .Where(t => t.GetInterfaces().Contains(typeof(IScenario)))
-                .AsImplementedInterfaces();
+                .Where(t => IsScenario(t))
+                .Named<object>("scenario");
             LoadPlugins(builder);
 
             var container = builder.Build();
-
-            foreach (var scenario in container.Resolve<IEnumerable<IScenario>>())
+           
+            foreach (var scenario in container.ResolveNamed<IEnumerable<object>>("scenario"))
             {
-                if (scenario.Name == type)
+                if (Name(scenario) == type)
                 {
 
-                    await scenario.Run(config, args, sendResult, sendError);
+                    await Run(scenario,config, args, sendResult, sendError);
                 }
             }
 
+
+        }
+        private static string Name(object scenario)
+        {
+            var t = scenario.GetType();
+            var p = t.GetProperty("Name");
+            var name =  (string)p.GetGetMethod(false).Invoke(scenario, null);
+            return name;
+        }
+        private static Task Run(object scenario, object config, string[] args, Action<string, float> sendResult, Action<string> error)
+        {
+            var t = scenario.GetType();
+
+            var run = t.GetMethod("Run");
+            if (run.GetParameters().Length == 4)
+            {
+                return (Task)run.Invoke(scenario, new object[] { config, args, sendResult, error });
+            }
+            else if (run.GetParameters().Length == 3)
+            {
+                return (Task)run.Invoke(scenario, new object[] { config, args, sendResult });
+            }
+            else
+            {
+                throw new InvalidOperationException($"Failed to start scenario {Name(scenario)}");
+            }
+
+        }
+        private static bool IsScenario(Type t)
+        {
+            var run = t.GetMethod("Run");
+            if (run == null)
+            {
+                return false;
+            }
+            if (!run.ReturnType.IsAssignableTo<Task>())
+            {
+                return false;
+            }
+
+            var name = t.GetProperty("Name");
+            if (name == null)
+            {
+                return false;
+            }
+
+            if (!name.CanRead)
+            {
+                return false;
+            }
+            if(name.PropertyType != typeof(string))
+            {
+                return false;
+            }
+
+            var parameters = run.GetParameters();
+
+            if (parameters.Length < 3)
+            {
+                return false;
+            }
+            if (parameters[0].ParameterType != typeof(Object))
+            {
+                return false;
+            }
+            if (parameters[1].ParameterType != typeof(string[]))
+            {
+                return false;
+            }
+            if (parameters[2].ParameterType != typeof(Action<string, float>))
+            {
+                return false;
+            }
+            if (parameters.Length >= 4 && parameters[3].ParameterType != typeof(Action<string>))
+            {
+                return false;
+            }
+            return true;
 
         }
 
@@ -81,8 +159,8 @@ namespace Stormancer.Monitoring.SmokeTest
                     var assembly = Assembly.LoadFile(asmPath);
 
                     builder.RegisterAssemblyTypes(assembly)
-                    .Where(t => t.GetInterfaces().Contains(typeof(IScenario)))
-                    .AsImplementedInterfaces();
+                        .Where(t => IsScenario(t))
+                        .Named<object>("scenario");
 
                 }
             }
