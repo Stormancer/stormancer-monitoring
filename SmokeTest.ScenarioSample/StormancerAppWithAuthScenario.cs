@@ -7,26 +7,10 @@ using System.Threading.Tasks;
 using Stormancer;
 using MsgPack.Serialization;
 using System.Diagnostics;
+using Stormancer.Diagnostics;
 
 namespace SmokeTest.ScenarioSample
 {
-    public class LoginResult
-    {
-        [MessagePackMember(0)]
-        public string ErrorMsg { get; set; } = "";
-
-        [MessagePackMember(1)]
-        public bool Success { get; set; }
-
-        [MessagePackMember(2)]
-        public string Token { get; set; } = "";
-
-        [MessagePackMember(3)]
-        public string UserId { get; set; } = "";
-
-        [MessagePackMember(4)]
-        public string Username { get; set; } = "";
-    }
 
     class StormancerAppWithAuthScenario : IScenario
     {
@@ -38,48 +22,91 @@ namespace SmokeTest.ScenarioSample
             }
         }
 
+
         public async Task Run(dynamic configuration, string[] args, Action<string, float> sendMetric, Action<string> error)
         {
             bool online = false;
             try
             {
-                var watch = new Stopwatch();
-                watch.Start();
+
                 string endpoint = configuration.app.endpoint;
-                string appName = configuration.app.name;
+                string appName = configuration.app.application;
                 string appAccount = configuration.app.account;
-                string impersonationKey = configuration.app.impersonationKey;
-                string claimValue = configuration.app.claimValue;
-                string claimPath = configuration.app.claimPath;
+                //string impersonationKey = configuration.app.impersonationKey;
+                //string claimValue = configuration.app.claimValue;
+                //string claimPath = configuration.app.claimPath;
                 var config = Stormancer.ClientConfiguration.ForAccount(appAccount, appName);
                 config.ServerEndpoint = endpoint;
-
+                config.Logger = new DefaultLogger();
                 var client = new Stormancer.Client(config);
-                var authenticator = await client.GetPublicScene("authenticator", "");
-                await authenticator.Connect();
-                watch.Stop();
-                sendMetric("connectionTime", watch.ElapsedMilliseconds);
-                watch.Restart();
-                var result = await authenticator.RpcTask<Dictionary<string, string>, LoginResult>("login", new Dictionary<string, string> {
-                    { "provider","impersonation" },
-                    { "claimValue",claimValue },
-                    {"secret",impersonationKey },
-                    {"impersonated-provider","psn" },
-                    {"claimPath",claimPath }
-                });
-                watch.Stop();
-                sendMetric("authTime", watch.ElapsedMilliseconds);
-                online = result.Success;
+                var auth = new Authentication(client);
+                var id = args.Any() ? args[0] : Guid.NewGuid().ToString();
+
+                await Measure(() =>
+                {
+                    return auth.Login(id);
+                }, "login", sendMetric);
+
+                //var scene = await Measure(() =>
+                //{
+                //    return auth.Locate("apoc.character", "");
+                //}, "connect.locateService", sendMetric);
+
+                online = true;
                 client.Disconnect();
             }
             catch (Exception ex)
             {
                 error(ex.Message);
+                online = false;
             }
             finally
             {
                 sendMetric("online", online ? 1f : 0f);
             }
+        }
+
+        private async Task Measure(Func<Task> operation, string metricName, Action<string, float> sendMetric)
+        {
+            var watch = new Stopwatch();
+            watch.Start();
+            try
+            {
+                await operation();
+            }
+            finally
+            {
+                watch.Stop();
+                sendMetric(metricName, watch.ElapsedMilliseconds);
+            }
+
+        }
+
+        private async Task<T> Measure<T>(Func<Task<T>> operation, string metricName, Action<string, float> sendMetric)
+        {
+            var watch = new Stopwatch();
+            watch.Start();
+            try
+            {
+                return await operation();
+            }
+            finally
+            {
+                watch.Stop();
+                sendMetric(metricName, watch.ElapsedMilliseconds);
+            }
+
+        }
+    }
+    public class DefaultLogger : ILogger
+    {
+        public void Log(LogLevel level, string category, string message, object data)
+        {
+        }
+
+        public void Log(LogLevel level, string category, string message, Exception ex)
+        {
+    
         }
     }
 }

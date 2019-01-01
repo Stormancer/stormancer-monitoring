@@ -1,12 +1,11 @@
 ﻿{
 
-  "broken-app": {
-    "__type": "rpc",
-    "endpoint": "http://server",
-    "account": "<account>",
-    "application": "<app>",
-    "scene": "monitoring",
-    "rpc": "monitoring.statistics",
-    "secret": "<App secret>"
+  "apoc": {
+    "__type": "appAuth",
+    "app": {
+      "endpoint": "http://localhost:80",
+      "account": "apoc",
+      "application": "dev"
+    }
   }
 }
