@@ -1,15 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio Version 17
+VisualStudioVersion = 17.12.35309.182
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stormancer.Monitoring.SD.Plugin", "Stormancer.Monitoring.SD.Plugin\Stormancer.Monitoring.SD.Plugin.csproj", "{FD999043-5678-462D-A4FD-835EBC612A75}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stormancer.Monitoring.SmokeTest", "Stormancer.Monitoring.SmokeTest\Stormancer.Monitoring.SmokeTest.csproj", "{7902D623-627C-4AB6-A2FC-06EBCD318117}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stormancer.LoadTester", "Stormancer.LoadTester\Stormancer.LoadTester.csproj", "{9F1F1384-55B9-4084-99A5-5BCADAA8963B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmokeTest.ScenarioSample", "SmokeTest.ScenarioSample\SmokeTest.ScenarioSample.csproj", "{7D8D8C34-29C3-4BD8-8648-7167C6A3E5E0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stormancer.Monitoring.Bot", "Stormancer.Monitoring.Bot\Stormancer.Monitoring.Bot.csproj", "{3C250C18-BD9A-4DE1-80FB-D40DFE1CA3DA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +17,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{FD999043-5678-462D-A4FD-835EBC612A75}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FD999043-5678-462D-A4FD-835EBC612A75}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FD999043-5678-462D-A4FD-835EBC612A75}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FD999043-5678-462D-A4FD-835EBC612A75}.Release|Any CPU.Build.0 = Release|Any CPU
 		{7902D623-627C-4AB6-A2FC-06EBCD318117}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{7902D623-627C-4AB6-A2FC-06EBCD318117}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7902D623-627C-4AB6-A2FC-06EBCD318117}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -33,8 +29,15 @@ Global
 		{7D8D8C34-29C3-4BD8-8648-7167C6A3E5E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7D8D8C34-29C3-4BD8-8648-7167C6A3E5E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7D8D8C34-29C3-4BD8-8648-7167C6A3E5E0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3C250C18-BD9A-4DE1-80FB-D40DFE1CA3DA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3C250C18-BD9A-4DE1-80FB-D40DFE1CA3DA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3C250C18-BD9A-4DE1-80FB-D40DFE1CA3DA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3C250C18-BD9A-4DE1-80FB-D40DFE1CA3DA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B934EF01-0B51-477D-9C08-A2223D1FA656}
 	EndGlobalSection
 EndGlobal

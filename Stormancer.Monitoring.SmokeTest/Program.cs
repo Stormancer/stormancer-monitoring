@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json;
-using Stormancer.Management.Client;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +7,6 @@ using System.Threading.Tasks;
 using System.Reactive.Linq;
 using System.Diagnostics;
 using Newtonsoft.Json.Linq;
-using Autofac;
 using System.Reflection;
 
 namespace Stormancer.Monitoring.SmokeTest
@@ -102,7 +100,7 @@ namespace Stormancer.Monitoring.SmokeTest
             {
                 return false;
             }
-            if (!run.ReturnType.IsAssignableTo<Task>())
+            if (!run.ReturnType.IsAssignableTo(typeof(Task)))
             {
                 return false;
             }
