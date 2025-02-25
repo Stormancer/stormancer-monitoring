@@ -113,7 +113,10 @@ namespace Stormancer.Monitoring.Bot
                             config.Plugins.Add(new Stormancer.Plugins.PartyPlugin());
                             config.Plugins.Add(new GameFinderPlugin());
                             config.Logger = new Logger(logger);
+                            config.AdditionalHeaders["clientVersion"] = c.ClientVersion;
+                            config.AdditionalHeaders["platform"] = "bot";
                             using var client = new Stormancer.Client(config);
+                            
                             var users = client.DependencyResolver.Resolve<Stormancer.Plugins.UserApi>();
 
                             users.OnGetAuthParameters = () => Task.FromResult(new Stormancer.Plugins.AuthParameters { Type = "ephemeral", Parameters = new Dictionary<string, string> { ["gameVersion.clientVersion"] = c.ClientVersion } });
