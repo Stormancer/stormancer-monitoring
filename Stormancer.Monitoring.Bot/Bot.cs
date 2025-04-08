@@ -127,8 +127,11 @@ namespace Stormancer.Monitoring.Bot
 
                             var party = client.DependencyResolver.Resolve<PartyApi>();
 
-                            await party.CreateParty(new PartyRequestDto { GameFinderName = "matchmaking" });
-                            logger.Log(LogLevel.Information, "Completed connectivity test {id} : {endpoint} {accountId} {appId}", id, c.Endpoint, c.AccountId, c.AppId);
+                            if (c.JoinParty)
+                            {
+                                await party.CreateParty(new PartyRequestDto { GameFinderName = "matchmaking" });
+                                logger.Log(LogLevel.Information, "Completed connectivity test {id} : {endpoint} {accountId} {appId}", id, c.Endpoint, c.AccountId, c.AppId);
+                            }
                             return true;
                         }
                         catch (Exception ex)

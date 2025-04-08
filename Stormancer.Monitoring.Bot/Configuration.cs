@@ -27,6 +27,8 @@ namespace Stormancer.Monitoring.Bot
 
         public IEnumerable<string> SMSPhoneNumbers { get; set; } = Enumerable.Empty<string>();
 
+        public bool JoinParty { get; set; } = true;
+
     }
 
     public class DiscordConfigurationSection
