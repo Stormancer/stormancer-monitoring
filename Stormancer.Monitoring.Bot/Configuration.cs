@@ -9,7 +9,7 @@ namespace Stormancer.Monitoring.Bot
     public class BotConfigurationSection
     {
         public Dictionary<string, ApplicationConfigurationSection> Applications { get; set; } = new Dictionary<string, ApplicationConfigurationSection>();
-
+        public int DownReminderIntervalSeconds { get; set; } = 60 * 10; // 10 minutes
         public DiscordConfigurationSection? Discord { get; set; }
         public SMSConfigurationSection? SMS { get; set; }
     }

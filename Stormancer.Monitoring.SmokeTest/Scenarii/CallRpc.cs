@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Reactive.Linq;
-using Stormancer.Management.Client;
 
 namespace Stormancer.Monitoring.SmokeTest.Scenarii
 {
@@ -24,8 +23,7 @@ namespace Stormancer.Monitoring.SmokeTest.Scenarii
            
             try
             {
-                var config = ClientConfiguration.ForAccount((string)configuration.account, (string)configuration.application);
-                config.ServerEndpoint = configuration.endpoint;
+                var config = ClientConfiguration.Create((string)configuration.endpoint, (string)configuration.account, (string)configuration.application);
 
                 var stopWatch = new Stopwatch();
                 stopWatch.Restart();

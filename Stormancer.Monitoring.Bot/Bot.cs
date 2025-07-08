@@ -14,6 +14,7 @@ namespace Stormancer.Monitoring.Bot
         public DateTime LastTestOn { get; set; }
         public DateTime LastTestSuccessOn { get; set; }
         public TimeSpan LastTestDuration { get; set; }
+        public DateTime LastNotificationOn { get; set; } = DateTime.MinValue;
         public ServiceStatus ServiceStatus { get; set; } = ServiceStatus.Up;
     }
     public class ConnectivityTestsRepository
@@ -53,25 +54,25 @@ namespace Stormancer.Monitoring.Bot
                     return LogLevel.Critical;
                 case Diagnostics.LogLevel.Error:
                     return LogLevel.Error;
-                    
+
                 case Diagnostics.LogLevel.Warn:
                     return LogLevel.Warning;
-                    
+
                 case Diagnostics.LogLevel.Info:
                     return LogLevel.Information;
-                    
+
                 case Diagnostics.LogLevel.Debug:
                     return LogLevel.Debug;
-                    
+
                 case Diagnostics.LogLevel.Trace:
                     return LogLevel.Trace;
-                    
+
             }
             return LogLevel.None;
         }
         public void Log(Diagnostics.LogLevel level, string category, string message, object data = null)
         {
-            logger.Log(GetLogLevel(level),$"{category}:{message}",category, message);
+            logger.Log(GetLogLevel(level), $"{category}:{message}", category, message);
         }
     }
     public class ConnectivityTest
@@ -83,7 +84,7 @@ namespace Stormancer.Monitoring.Bot
         private readonly IEnumerable<INotificationChannel> channels;
         private readonly ConnectivityTestsRepository repository;
 
-        public ConnectivityTest(ILogger<ConnectivityTest> logger,IOptions<BotConfigurationSection> config, IEnumerable<INotificationChannel> channels, ConnectivityTestsRepository repository)
+        public ConnectivityTest(ILogger<ConnectivityTest> logger, IOptions<BotConfigurationSection> config, IEnumerable<INotificationChannel> channels, ConnectivityTestsRepository repository)
         {
             this.logger = logger;
             this._config = config;
@@ -116,7 +117,7 @@ namespace Stormancer.Monitoring.Bot
                             config.AdditionalHeaders["clientVersion"] = c.ClientVersion;
                             config.AdditionalHeaders["platform"] = "bot";
                             using var client = new Stormancer.Client(config);
-                            
+
                             var users = client.DependencyResolver.Resolve<Stormancer.Plugins.UserApi>();
 
                             users.OnGetAuthParameters = () => Task.FromResult(new Stormancer.Plugins.AuthParameters { Type = "ephemeral", Parameters = new Dictionary<string, string> { ["gameVersion.clientVersion"] = c.ClientVersion } });
@@ -136,7 +137,7 @@ namespace Stormancer.Monitoring.Bot
                         }
                         catch (Exception ex)
                         {
-                            logger.Log(LogLevel.Error,ex, "Failed connectivity test {id} : {endpoint} {accountId} {appId}", id, c.Endpoint, c.AccountId, c.AppId);
+                            logger.Log(LogLevel.Error, ex, "Failed connectivity test {id} : {endpoint} {accountId} {appId}", id, c.Endpoint, c.AccountId, c.AppId);
                             return false;
                         }
                     }
@@ -147,7 +148,7 @@ namespace Stormancer.Monitoring.Bot
                     }
                     catch (Exception)
                     {
-                       
+
                         success = false;
                     }
 
@@ -183,9 +184,12 @@ namespace Stormancer.Monitoring.Bot
 
                 async Task NotifyFailure()
                 {
-                    if (state.ServiceStatus != ServiceStatus.Down && successiveFailures > 2)
+                    if (successiveFailures > 2 &&
+                        (state.ServiceStatus != ServiceStatus.Down
+                        || DateTime.UtcNow - state.LastNotificationOn > TimeSpan.FromSeconds(_config.Value.DownReminderIntervalSeconds)))
                     {
                         state.ServiceStatus = ServiceStatus.Down;
+                        state.LastNotificationOn = DateTime.UtcNow;
 
                         var ctx = new NotificationContext { AppId = id, NewState = state.ServiceStatus };
                         foreach (var channel in channels)
