@@ -27,8 +27,8 @@ namespace Stormancer.Monitoring.Bot
 
         public IEnumerable<string> SMSPhoneNumbers { get; set; } = Enumerable.Empty<string>();
 
-        public int ElevatedAlertThresholdSeconds { get; set; } = 60 * 10; // 5 minutes
-        public int ElevatedAlertReminderIntervalSeconds { get; set; } = 60 * 30; // 5 minutes
+        public int ElevatedAlertThresholdSeconds { get; set; } = 60 * 30; // 30 minutes
+        public int ElevatedAlertReminderIntervalSeconds { get; set; } = 60 * 30; // 30 minutes
 
         public bool JoinParty { get; set; } = true;
 

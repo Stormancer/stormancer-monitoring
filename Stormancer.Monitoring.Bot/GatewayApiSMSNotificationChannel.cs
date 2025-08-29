@@ -65,7 +65,7 @@ namespace Stormancer.Monitoring.Bot
             {
                 if (!_runningAlerts.ContainsKey(ctx.AppId) && _options.Value.Applications[ctx.AppId].SMSPhoneNumbers.Any())
                 {
-                    var cts = new CancellationTokenSource();
+                    var cts = CancellationTokenSource.CreateLinkedTokenSource(_cancellationToken);
                     _runningAlerts.Add(ctx.AppId, cts);
                     _ = StartAlertsAsync(ctx.AppId, cts.Token);
                 }
@@ -84,12 +84,13 @@ namespace Stormancer.Monitoring.Bot
 
         private async Task StartAlertsAsync(string appId, CancellationToken token)
         {
+            var alertStart = DateTime.UtcNow;
             try
             {
                 await Task.Delay(TimeSpan.FromSeconds(_options.Value.Applications[appId].ElevatedAlertThresholdSeconds), token);
                 while (!token.IsCancellationRequested)
                 {
-                    await SendAlertAsync(appId);
+                    await SendAlertAsync(appId, alertStart);
                     await Task.Delay(TimeSpan.FromSeconds(_options.Value.Applications[appId].ElevatedAlertReminderIntervalSeconds), token);
                 }
             }
@@ -102,15 +103,16 @@ namespace Stormancer.Monitoring.Bot
             }
         }
 
-        private async Task SendAlertAsync(string appId)
+        private async Task SendAlertAsync(string appId, DateTime alertStart)
         {
-            var alertStart = DateTime.UtcNow;
+            _logger.LogInformation("Sending alert SMS for application {appId}", appId);
+
             var token = _options.Value.SMS!.Token;
             var recipients = _options.Value.Applications[appId].SMSPhoneNumbers;
 
             using var httpClient = _httpClientFactory.CreateClient();
 
-            var httpRequest = new HttpRequestMessage(HttpMethod.Post, "https://api.gatewayapi.com/rest/sms");
+            var httpRequest = new HttpRequestMessage(HttpMethod.Post, "https://gatewayapi.eu/rest/mtsms");
             httpRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Token", token);
             httpRequest.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
             httpRequest.Content = JsonContent.Create(new
