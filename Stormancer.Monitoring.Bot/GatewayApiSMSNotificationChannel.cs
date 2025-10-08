@@ -97,33 +97,36 @@ namespace Stormancer.Monitoring.Bot
             catch (OperationCanceledException opCancelledException) when (opCancelledException.CancellationToken == token)
             {
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "An error occured while sending SMS alerts for app {appId}", appId);
-            }
         }
 
         private async Task SendAlertAsync(string appId, DateTime alertStart)
         {
-            _logger.LogInformation("Sending alert SMS for application {appId}", appId);
-
-            var token = _options.Value.SMS!.Token;
-            var recipients = _options.Value.Applications[appId].SMSPhoneNumbers;
-
-            using var httpClient = _httpClientFactory.CreateClient();
-
-            var httpRequest = new HttpRequestMessage(HttpMethod.Post, "https://gatewayapi.eu/rest/mtsms");
-            httpRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Token", token);
-            httpRequest.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
-            httpRequest.Content = JsonContent.Create(new
+            try
             {
-                sender = "Stormancer",
-                message = $"Application {appId} is DOWN since {alertStart:u}.",
-                recipients = recipients.Select(r => new { msisdn = r }).ToArray()
-            });
+                _logger.LogInformation("Sending alert SMS for application {appId}", appId);
 
-            var response = await httpClient.SendAsync(httpRequest);
-            response.EnsureSuccessStatusCode();
+                var token = _options.Value.SMS!.Token;
+                var recipients = _options.Value.Applications[appId].SMSPhoneNumbers;
+
+                using var httpClient = _httpClientFactory.CreateClient();
+
+                var httpRequest = new HttpRequestMessage(HttpMethod.Post, "https://gatewayapi.eu/rest/mtsms");
+                httpRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Token", token);
+                httpRequest.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+                httpRequest.Content = JsonContent.Create(new
+                {
+                    sender = "Stormancer",
+                    message = $"Application {appId} is DOWN since {alertStart:u}.",
+                    recipients = recipients.Select(r => new { msisdn = r }).ToArray()
+                });
+
+                var response = await httpClient.SendAsync(httpRequest);
+                response.EnsureSuccessStatusCode();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occured while sending SMS alerts for app {appId}", appId);
+            }
         }
     }
 }
